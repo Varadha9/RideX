@@ -1,0 +1,16 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: pricing-service
+
+pricing:
+  base-fare: 50.0
+  per-km-rate: 12.0
+  peak-hour-multiplier: 1.5
+  night-charge-percent: 20.0
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
