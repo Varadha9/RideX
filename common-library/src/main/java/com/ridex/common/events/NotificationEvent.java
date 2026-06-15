@@ -1,14 +1,22 @@
 package com.ridex.common.events;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class NotificationEvent {
-    private String recipient;   // email or phone
+    private String recipient;
     private String subject;
     private String message;
+
+    public NotificationEvent() {}
+
+    public NotificationEvent(String recipient, String subject, String message) {
+        this.recipient = recipient;
+        this.subject = subject;
+        this.message = message;
+    }
+
+    public String getRecipient() { return recipient; }
+    public void setRecipient(String recipient) { this.recipient = recipient; }
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
 }

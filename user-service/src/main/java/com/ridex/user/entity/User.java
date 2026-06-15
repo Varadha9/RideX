@@ -31,7 +31,7 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public enum Role { USER, ADMIN }
+    public enum Role { USER, DRIVER, ADMIN }
 
     public Long getId() { return id; }
     public String getName() { return name; }

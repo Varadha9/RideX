@@ -5,10 +5,12 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ridex
+    command: --innodb-buffer-pool-size=128M --performance-schema=OFF
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    mem_limit: 512m
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -35,8 +37,10 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: ridex-zookeeper
+    mem_limit: 256m
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_HEAP_OPTS: "-Xmx128M -Xms64M"
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -48,8 +52,19 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: "-Xmx256M -Xms128M"
+    mem_limit: 768m
+    memswap_limit: 1536m
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -64,6 +79,8 @@ services:
   user-service:
     build: ./user-service
     container_name: ridex-user-service
+    mem_limit: 384m
+    restart: on-failure
     depends_on:
       mysql:
         condition: service_healthy
@@ -77,6 +94,8 @@ services:
   driver-service:
     build: ./driver-service
     container_name: ridex-driver-service
+    mem_limit: 384m
+    restart: on-failure
     depends_on:
       mysql:
         condition: service_healthy
@@ -91,8 +110,12 @@ services:
   booking-service:
     build: ./booking-service
     container_name: ridex-booking-service
+    mem_limit: 384m
+    restart: on-failure
     depends_on:
       mysql:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     ports:
       - "8083:8083"
@@ -100,14 +123,18 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ridex
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       SPRING_REDIS_HOST: redis
 
   trip-service:
     build: ./trip-service
     container_name: ridex-trip-service
+    mem_limit: 384m
+    restart: on-failure
     depends_on:
       mysql:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     ports:
       - "8084:8084"
@@ -115,13 +142,17 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ridex
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
   payment-service:
     build: ./payment-service
     container_name: ridex-payment-service
+    mem_limit: 384m
+    restart: on-failure
     depends_on:
       mysql:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     ports:
       - "8085:8085"
@@ -129,19 +160,25 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ridex
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
   pricing-service:
     build: ./pricing-service
     container_name: ridex-pricing-service
+    mem_limit: 384m
     ports:
       - "8086:8086"
 
   notification-service:
     build: ./notification-service
     container_name: ridex-notification-service
+    mem_limit: 384m
+    restart: on-failure
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_started
+      kafka:
+        condition: service_healthy
     ports:
       - "8087:8087"
     environment:
@@ -152,15 +189,20 @@ services:
   analytics-service:
     build: ./analytics-service
     container_name: ridex-analytics-service
+    mem_limit: 384m
+    restart: on-failure
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
+      kafka:
+        condition: service_healthy
     ports:
       - "8088:8088"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ridex_analytics
       SPRING_DATASOURCE_USERNAME: ridex
       SPRING_DATASOURCE_PASSWORD: ridex
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
 volumes:
   mysql_data:

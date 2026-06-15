@@ -2,10 +2,12 @@ server:
   port: 8081
 
 spring:
+  main:
+    lazy-initialization: true
   application:
     name: user-service
   datasource:
-    url: jdbc:mysql://localhost:3306/ridex
+    url: jdbc:mysql://mysql:3306/ridex
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -2,15 +2,17 @@ server:
   port: 8087
 
 spring:
+  main:
+    lazy-initialization: true
   application:
     name: notification-service
   rabbitmq:
-    host: localhost
+    host: rabbitmq
     port: 5672
     username: ridex
     password: ridex
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:29092
     consumer:
       group-id: notification-service-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
