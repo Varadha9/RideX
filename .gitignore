@@ -1,14 +1,28 @@
+# Maven build output
 target/
-*.class
 *.jar
 *.war
+*.class
 
+# IDE
 .idea/
 *.iml
 .vscode/
-*.code-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
-.env
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
 *.log
+logs/
 
-*.DS_Store
+# Docker
+.dockerignore
+
+# Spring Boot
+spring-shell.log
